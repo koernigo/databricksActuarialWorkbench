@@ -9,8 +9,10 @@
 ##########################################
 #########  install R packages
 ##########################################
-
-install.packages("CASdatasets", repos = "http://dutangc.free.fr/pub/RRepos/", type="source")
+install.packages("xts")
+install.packages("sp")
+install.packages("/dbfs/FileStore/tables/CASdatasets_1_0_12_tar.gz", repos = NULL, type ="source")
+#install.packages("CASdatasets", repos = "http://dutangc.free.fr/pub/RRepos/", type="source")
  
 require(MASS)
 library(CASdatasets)
@@ -18,5 +20,9 @@ library(CASdatasets)
  
 data(freMTPL2freq)
 str(freMTPL2freq)
+
+
+
+# COMMAND ----------
 
 
