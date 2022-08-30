@@ -49,7 +49,7 @@ dat2$DrivAgeGLM <- as.factor(DrivAgeGLM[dat2$DrivAge-17,2])
 dat2[,"DrivAgeGLM"] <-relevel(dat2[,"DrivAgeGLM"], ref="5")
 dat2$BonusMalusGLM <- as.integer(pmin(dat2$BonusMalus, 150))
 dat2$DensityGLM <- as.numeric(log(dat2$Density))
-dat2[,"Region"] <-relevel(dat2[,"Region"], ref="R24")
+dat2[,"Region"] <-relevel(dat2[,"Region"], ref="Aquitaine")
 
 set.seed(100)
 ll <- sample(c(1:nrow(dat2)), round(0.9*nrow(dat2)), replace = FALSE)

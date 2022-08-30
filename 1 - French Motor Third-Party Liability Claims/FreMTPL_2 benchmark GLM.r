@@ -1,6 +1,67 @@
 # Databricks notebook source
 ##########################################
 #########  Data Analysis French MTPL
+#########  Install packages
+#########  Author: Mario Wuthrich
+#########  Version March 02, 2020
+##########################################
+
+##########################################
+#########  install R packages
+##########################################
+install.packages("xts")
+install.packages("sp")
+install.packages("/dbfs/FileStore/tables/CASdatasets_1_0_12_tar.gz", repos = NULL, type ="source")
+#install.packages("CASdatasets", repos = "http://dutangc.free.fr/pub/RRepos/", type="source")
+require(MASS)
+library(CASdatasets)
+?CASdatasets
+ 
+data(freMTPL2freq)
+str(freMTPL2freq)
+
+# COMMAND ----------
+
+# MAGIC %sh sudo apt-get install libjpeg-turbo8-dev
+
+# COMMAND ----------
+
+install.packages("rms")
+
+# COMMAND ----------
+
+# MAGIC %python
+# MAGIC script = """
+# MAGIC   sudo yum install -y libjpeg-turbo-devel
+# MAGIC """
+# MAGIC 
+# MAGIC dbutils.fs.put("/databricks/init/libjeg.sh", script, True)
+
+# COMMAND ----------
+
+# MAGIC %sh
+# MAGIC ls /dbfs/databricks/init/libjeg.sh
+
+# COMMAND ----------
+
+install.packages("jpeg")
+
+# COMMAND ----------
+
+#install.packages("jpeg",verbose= TRUE,dependencies = TRUE,repose = "https://cloud.r-project.org/")
+library("jpeg")
+install.packages("latticeExtra")
+library("latticeExtra")
+install.packages("Hmisc")
+
+# COMMAND ----------
+
+install.packages("rpart.plot")
+
+# COMMAND ----------
+
+##########################################
+#########  Data Analysis French MTPL
 #########  Benchmarks GLM
 #########  Author: Mario Wuthrich
 #########  Version March 02, 2020
