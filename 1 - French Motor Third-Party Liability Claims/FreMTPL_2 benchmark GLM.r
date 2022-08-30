@@ -30,20 +30,6 @@ install.packages("rms")
 
 # COMMAND ----------
 
-# MAGIC %python
-# MAGIC script = """
-# MAGIC   sudo yum install -y libjpeg-turbo-devel
-# MAGIC """
-# MAGIC 
-# MAGIC dbutils.fs.put("/databricks/init/libjeg.sh", script, True)
-
-# COMMAND ----------
-
-# MAGIC %sh
-# MAGIC ls /dbfs/databricks/init/libjeg.sh
-
-# COMMAND ----------
-
 install.packages("jpeg")
 
 # COMMAND ----------

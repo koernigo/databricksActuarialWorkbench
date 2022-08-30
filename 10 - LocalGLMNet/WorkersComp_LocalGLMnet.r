@@ -1,4 +1,8 @@
 # Databricks notebook source
+install.packages("keras")
+
+# COMMAND ----------
+
 ## -----------------------------------------------------------------------------
 library(keras)
 library(locfit)
@@ -12,6 +16,7 @@ library(tidyr)
 library(corrplot)
 RNGversion("3.5.0")
 
+# COMMAND ----------
 
 ## -----------------------------------------------------------------------------
 options(encoding = 'UTF-8')
@@ -1688,4 +1693,3 @@ reticulate::py_config()
 
 ## -----------------------------------------------------------------------------
 tensorflow::tf_version()
-
