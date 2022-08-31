@@ -127,12 +127,10 @@ keras_plot_loss_min <- function(x, seed) {
     vmin <- which.min(x$val_loss)
     df_val <- data.frame(epoch = 1:length(x$loss), train_loss = x$loss, val_loss = x$val_loss)
     df_val <- gather(df_val, variable, loss, -epoch)
-    #Added for mlFlow tracking
     plt <- ggplot(df_val, aes(x = epoch, y = loss, group = variable, color = variable)) +
       geom_line(size = line_size) + geom_vline(xintercept = vmin, color = "green", size = line_size) +
       labs(title = paste("Train and validation loss for seed", seed),
            subtitle = paste("Green line: Smallest validation loss for epoch", vmin))
-    ggsave("/dbfs/tmp/keras_plot_loss.png")
     suppressMessages(print(plt))
 }
 
@@ -562,9 +560,8 @@ fit_p2 <- model_p2 %>%
 
 
 ## -----------------------------------------------------------------------------
-plot_result <- plot(fit_p2)
-print(typeof(plot_result))
-print(plot_result)
+plot(fit_p2)
+
 
 ## -----------------------------------------------------------------------------
 keras_plot_loss_min(fit_p2, seed)
@@ -572,10 +569,6 @@ keras_plot_loss_min(fit_p2, seed)
 
 ## -----------------------------------------------------------------------------
 load_model_weights_hdf5(model_p2, cp_path)
-
-# COMMAND ----------
-
-print(plot_result)
 
 # COMMAND ----------
 
@@ -764,7 +757,7 @@ verbose <- 1
 
 ## -----------------------------------------------------------------------------
 # store and use only the best model
-cp_path <- paste("/dbfs/tmp/Networks/model_p3")
+cp_path <- paste("./Networks/model_p3")
 
 cp_callback <- callback_model_checkpoint(
     filepath = cp_path,
@@ -883,104 +876,89 @@ Output <- list(Design, Attention) %>% layer_dot(name='LocalGLM', axes=1) %>%
 
 # COMMAND ----------
 
-install.packages("mlflow")
-library(mlflow)
-install_mlflow()
+## -----------------------------------------------------------------------------
+model_lgn_p2 <- keras_model(inputs = list(Design), outputs = c(Output))
+
+
+## -----------------------------------------------------------------------------
+model_lgn_p2 %>% compile(
+    loss = k_gamma_loss,
+    optimizer = 'nadam'
+)
+summary(model_lgn_p2)
 
 # COMMAND ----------
 
-#mlflow_set_experiment(experiment_id"/Repos/oliver.koernig@databricks.com/ActuarialDataScience/10 - LocalGLMNet/WorkersComp_LocalGLMnet")
-mlflow_set_experiment(experiment_id = "83447045894155") #This is for Experiment "WorkersComp"
-#mlflow_set_experiment(experiment_name = "/Repos/oliver.koernig@databricks.com/ActuarialDataScience/10 - LocalGLMNet/WorkersComp_LocalGLMnet")
-
-with(mlflow_start_run(), {
-  ## -----------------------------------------------------------------------------
-  model_lgn_p2 <- keras_model(inputs = list(Design), outputs = c(Output))
-
-
-  ## -----------------------------------------------------------------------------
-  model_lgn_p2 %>% compile(
-      loss = k_gamma_loss,
-      optimizer = 'nadam'
-  )
-  summary(model_lgn_p2)
-  ## -----------------------------------------------------------------------------
-  # set hyperparameters
-  epochs <- 100
-  batch_size <- 5000
-  validation_split <- 0.2 # set to >0 to see train/validation loss in plot(fit)
-  verbose <- 1
-  mlflow_log_param("epochs", epochs)
-  mlflow_log_param("batch_size", batch_size)
-  mlflow_log_param("validation_split", validation_split)
-  ## -----------------------------------------------------------------------------
-  # store and use only the best model
-  cp_path <- paste("/dbfs/tmp/Networks/model_lgn_p2")
-
-  cp_callback <- callback_model_checkpoint(
-      filepath = cp_path,
-      monitor = "val_loss",
-      save_weights_only = TRUE,
-      save_best_only = TRUE,
-      verbose = 0
-  )
+## -----------------------------------------------------------------------------
+# set hyperparameters
+epochs <- 100
+batch_size <- 5000
+validation_split <- 0.2 # set to >0 to see train/validation loss in plot(fit)
+verbose <- 1
 
 
-  ## -----------------------------------------------------------------------------
-  fit_lgn_p2 <- model_lgn_p2 %>% fit(
-      list(XX), list(YY),
-      validation_split = validation_split,
-      epochs = epochs,
-      batch_size = batch_size,
-      callbacks = list(cp_callback),
-      verbose = verbose
-  )
+## -----------------------------------------------------------------------------
+# store and use only the best model
+cp_path <- paste("/dbfs/tmp/Networks/model_lgn_p2")
 
-   mlflow_log_model(model_lgn_p2, "model") 
-  ## -----------------------------------------------------------------------------
-  plot(fit_lgn_p2) 
-  ## -----------------------------------------------------------------------------
-  
-  keras_plot_loss_min(fit_lgn_p2, seed)
-  mlflow_log_artifact("/dbfs/tmp/keras_plot_loss.png") 
-  
+cp_callback <- callback_model_checkpoint(
+    filepath = cp_path,
+    monitor = "val_loss",
+    save_weights_only = TRUE,
+    save_best_only = TRUE,
+    verbose = 0
+)
 
-  ## -----------------------------------------------------------------------------
-  load_model_weights_hdf5(model_lgn_p2, cp_path)
-  ## -----------------------------------------------------------------------------
-  # calculating the predictions
-  learn$fitlgnp2 <- as.vector(model_lgn_p2 %>% predict(list(XX)))
-  test$fitlgnp2 <- as.vector(model_lgn_p2 %>% predict(list(TT)))
 
-  # average in-sample and out-of-sample losses (in 10^(0))
-  sprintf("Gamma deviance shallow network (train): %s", round(gamma_loss(learn$Claim, learn$fitlgnp2), 4))
-  sprintf("Gamma deviance shallow network (test): %s", round(gamma_loss(test$Claim, test$fitlgnp2), 4))
+## -----------------------------------------------------------------------------
+fit_lgn_p2 <- model_lgn_p2 %>% fit(
+    list(XX), list(YY),
+    validation_split = validation_split,
+    epochs = epochs,
+    batch_size = batch_size,
+    callbacks = list(cp_callback),
+    verbose = verbose
+)
 
-  # average claims size
-  sprintf("Average size (test): %s", round(mean(test$fitlgnp2), 1))
 
-  mlflow_log_metric("Gamma deviance shallow network (train):", round(gamma_loss(learn$Claim, learn$fitlgnp2), 4))
-  mlflow_log_metric("Gamma deviance shallow network (test)", round(gamma_loss(test$Claim, test$fitlgnp2), 4))
-  mlflow_log_metric("Average size (test)", round(mean(test$fitlgnp2), 1))
-  
-  ## ----------------------------------------------------------------------------
-  df_cmp %<>% bind_rows(
-    data.frame(model = "LocalGLMnet p2 (gamma)",
-               learn_p2 = round(gamma_loss(learn$Claim, learn$fitlgnp2), 4),
-               learn_pp = round(p_loss(learn$Claim, learn$fitlgnp2, p) * 10, 4),
-               learn_p3 = round(ig_loss(learn$Claim, learn$fitlgnp2) * 1000, 4),
-               test_p2 = round(gamma_loss(test$Claim, test$fitlgnp2), 4),
-               test_pp = round(p_loss(test$Claim, test$fitlgnp2, p) * 10, 4),
-               test_p3 = round(ig_loss(test$Claim, test$fitlgnp2) * 1000, 4),
-               avg_size = round(mean(test$fitlgnp2), 0)
-    ))
-  df_cmp
-})
+## -----------------------------------------------------------------------------
+plot(fit_lgn_p2)
+
+
+## -----------------------------------------------------------------------------
+keras_plot_loss_min(fit_lgn_p2, seed)
+
+
+## -----------------------------------------------------------------------------
+load_model_weights_hdf5(model_lgn_p2, cp_path)
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC Don't run below this point
+## -----------------------------------------------------------------------------
+# calculating the predictions
+learn$fitlgnp2 <- as.vector(model_lgn_p2 %>% predict(list(XX)))
+test$fitlgnp2 <- as.vector(model_lgn_p2 %>% predict(list(TT)))
+
+# average in-sample and out-of-sample losses (in 10^(0))
+sprintf("Gamma deviance shallow network (train): %s", round(gamma_loss(learn$Claim, learn$fitlgnp2), 4))
+sprintf("Gamma deviance shallow network (test): %s", round(gamma_loss(test$Claim, test$fitlgnp2), 4))
+
+# average claims size
+sprintf("Average size (test): %s", round(mean(test$fitlgnp2), 1))
+
+
+## -----------------------------------------------------------------------------
+df_cmp %<>% bind_rows(
+  data.frame(model = "LocalGLMnet p2 (gamma)",
+             learn_p2 = round(gamma_loss(learn$Claim, learn$fitlgnp2), 4),
+             learn_pp = round(p_loss(learn$Claim, learn$fitlgnp2, p) * 10, 4),
+             learn_p3 = round(ig_loss(learn$Claim, learn$fitlgnp2) * 1000, 4),
+             test_p2 = round(gamma_loss(test$Claim, test$fitlgnp2), 4),
+             test_pp = round(p_loss(test$Claim, test$fitlgnp2, p) * 10, 4),
+             test_p3 = round(ig_loss(test$Claim, test$fitlgnp2) * 1000, 4),
+             avg_size = round(mean(test$fitlgnp2), 0)
+  ))
+df_cmp
 
 # COMMAND ----------
 
