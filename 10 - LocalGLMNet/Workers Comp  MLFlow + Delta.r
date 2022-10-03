@@ -1,4 +1,10 @@
 # Databricks notebook source
+# DBTITLE 1,An End To End Actuarial Workflow for Workers Comp Claim Size Modeling
+# MAGIC %md
+# MAGIC ![my_test_image](files/WC_E2E.png)
+
+# COMMAND ----------
+
 # DBTITLE 1,Library Pre-Requisites
 #Uncomment if Cluster doesn't install this package
 #install.packages("conflicted")
@@ -187,9 +193,6 @@ plot_size <- function(test, xvar, title, model, mdlvariant) {
 # DBTITLE 1,Load Workers Comp Data From Bronze Table
 WorkersComp_Spark_DF<-SparkR::sql("SELECT * FROM ins_data_sets.workerscomp_bronze")
 WorkersComp <- as.data.frame(WorkersComp_Spark_DF)
-
-# COMMAND ----------
-
 WorkersComp <- mutate_at(WorkersComp, vars("MaritalStatus", "Gender","PartTimeFullTime"), as.factor)
 
 # COMMAND ----------
@@ -338,22 +341,6 @@ bind_rows(quantile(learn$Claim, probs = probs), quantile(test$Claim, probs = pro
 
 # COMMAND ----------
 
-# DBTITLE 1,Store model results
-## -----------------------------------------------------------------------------
-# initialize table to store all model results for comparison
-df_cmp <- tibble(
- model = character(),
- learn_p2 = numeric(),
- learn_pp = numeric(),
- learn_p3 = numeric(),
- test_p2 = numeric(),
- test_pp = numeric(),
- test_p3 = numeric(),
- avg_size = numeric(),
-)
-
-# COMMAND ----------
-
 # DBTITLE 1,Reporting Delay summary statistics
 ## -----------------------------------------------------------------------------
 range(dat$AccYear)
@@ -459,7 +446,7 @@ p2 <- ggplot(dat, aes(x = log(Claim))) + geom_density(colour = "blue") +
 p3 <- ggplot(dat, aes(x = Claim^(1/3))) + geom_density(colour = "blue") +
     labs(title = "Empirical density of claims amounts^(1/3)", x = "claims amounts", y = "empirical density")
 
-grid.arrange(p1, p2, p3, ncol = 2)
+grid.arrange(p1, p2, p3, ncol = 1)
 
 # COMMAND ----------
 
@@ -482,7 +469,6 @@ ggplot(dat_loglog, aes(x = xx, y = ES)) + geom_line(colour = "blue", size = line
 
 # COMMAND ----------
 
-# DBTITLE 1,Marginal plots
 ## -----------------------------------------------------------------------------
 col_names <- c("Age","Gender","MaritalStatus","DependentChildren","DependentsOther",
                "WeeklyPay","PartTimeFullTime","HoursWorkedPerWeek","DaysWorkedPerWeek",
@@ -500,11 +486,11 @@ dat_tmp <- dat_tmp %>% mutate(
     RepDelay = pmin(100, floor(RepDelay / 10) * 10)
 )
 
+# COMMAND ----------
 
-## ----loop_plot, fig.height=6, fig.width=9-------------------------------------
+# DBTITLE 1,Marginal plots
 for (k in 1:length(col_names)) {
     xvar <- col_names[k]
-    
     out <- dat_tmp %>% group_by(!!sym(xvar)) %>% summarize(vol = n(), avg = mean(Claim))
 
     tmp <- dat_tmp %>% select(!!sym(xvar))
@@ -599,18 +585,6 @@ with(mlflow_start_run(), {
   log_size_hom <- log(size_hom)
 
   ## -----------------------------------------------------------------------------
-  df_cmp %<>% bind_rows(
-    data.frame(
-      model = "Null model",
-      learn_p2 = round(gamma_loss(learn$Claim, size_hom), 4),
-      learn_pp = round(p_loss(learn$Claim, size_hom, p) * 10, 4),
-      learn_p3 = round(ig_loss(learn$Claim, size_hom) * 1000, 4),
-      test_p2 = round(gamma_loss(test$Claim, size_hom), 4),
-      test_pp = round(p_loss(test$Claim, size_hom, p) * 10, 4),
-      test_p3 = round(ig_loss(test$Claim, size_hom) * 1000, 4),
-      avg_size = round(size_hom, 0)
-    ))
-  df_cmp
   
   mlflow_log_metric("learn_p2", round(gamma_loss(learn$Claim, size_hom), 4))
   mlflow_log_metric("learn_pp", round(p_loss(learn$Claim, size_hom, p) * 10, 4))
@@ -662,7 +636,7 @@ model_p2 <- keras_model(inputs = list(Design), outputs = c(Output))
 
 # COMMAND ----------
 
-# DBTITLE 1,Compilation
+# DBTITLE 0,Compilation
 ## -----------------------------------------------------------------------------
 model_p2 %>% compile(
     loss = k_gamma_loss,
@@ -673,7 +647,7 @@ summary(model_p2)
 
 # COMMAND ----------
 
-# DBTITLE 1,Fitting
+# DBTITLE 0,Fitting
 ## -----------------------------------------------------------------------------
 # set hyperparameters
 epochs <- 100
@@ -742,6 +716,7 @@ with(mlflow_start_run(), {
   # average claims size
   sprintf("Average size (test): %s", round(mean(test$fitshp2), 1))
 
+  model = "Plain-vanilla p2 (gamma)"
   learn_p2 <- round(gamma_loss(learn$Claim, learn$fitshp2), 4)
    learn_pp <- round(p_loss(learn$Claim, learn$fitshp2, p) * 10, 4)
    learn_p3 <- round(ig_loss(learn$Claim, learn$fitshp2) * 1000, 4)
@@ -750,17 +725,6 @@ with(mlflow_start_run(), {
    test_p3 <- round(ig_loss(test$Claim, test$fitshp2) * 1000, 4)
    avg_size <-  round(mean(test$fitshp2), 0)
   ## -----------------------------------------------------------------------------
-  df_cmp %<>% bind_rows(
-    data.frame(model = "Plain-vanilla p2 (gamma)",
-               learn_p2 = round(gamma_loss(learn$Claim, learn$fitshp2), 4),
-               learn_pp = round(p_loss(learn$Claim, learn$fitshp2, p) * 10, 4),
-               learn_p3 = round(ig_loss(learn$Claim, learn$fitshp2) * 1000, 4),
-               test_p2 = round(gamma_loss(test$Claim, test$fitshp2), 4),
-               test_pp = round(p_loss(test$Claim, test$fitshp2, p) * 10, 4),
-               test_p3 = round(ig_loss(test$Claim, test$fitshp2) * 1000, 4),
-               avg_size = round(mean(test$fitshp2), 0)
-    ))
-  df_cmp
   mlflow_log_metric("learn_p2", learn_p2)
   mlflow_log_metric("learn_pp", learn_pp)
   mlflow_log_metric("learn_p3", learn_p3)
@@ -773,6 +737,7 @@ with(mlflow_start_run(), {
 })
 
 # COMMAND ----------
+
 
 ## -----------------------------------------------------------------------------
 # Age
@@ -859,6 +824,9 @@ load_model_weights_hdf5(model_pp, cp_path)
 ## -----------------------------------------------------------------------------
 # calculating the predictions
 with(mlflow_start_run(), {
+  mlflow_log_param("epochs", epochs)
+  mlflow_log_param("batch_size", batch_size)
+  mlflow_log_param("validation_split", validation_split)
   learn$fitshpp <- as.vector(model_pp %>% predict(list(XX)))
   test$fitshpp <- as.vector(model_pp %>% predict(list(TT)))
 
@@ -878,17 +846,6 @@ with(mlflow_start_run(), {
  avg_size <- round(mean(test$fitshpp), 0)
  model = paste0("Plain-vanilla pp (p=", p,")")
   ## -----------------------------------------------------------------------------
-  df_cmp %<>% bind_rows(
-    data.frame(model = paste0("Plain-vanilla pp (p=", p,")"),
-               learn_p2 = round(gamma_loss(learn$Claim, learn$fitshpp), 4),
-               learn_pp = round(p_loss(learn$Claim, learn$fitshpp, p) * 10, 4),
-               learn_p3 = round(ig_loss(learn$Claim, learn$fitshpp) * 1000, 4),
-               test_p2 = round(gamma_loss(test$Claim, test$fitshpp), 4),
-               test_pp = round(p_loss(test$Claim, test$fitshpp, p) * 10, 4),
-               test_p3 = round(ig_loss(test$Claim, test$fitshpp) * 1000, 4),
-               avg_size = round(mean(test$fitshpp), 0)
-    ))
-  df_cmp
   mlflow_log_metric("learn_p2", learn_p2)
   mlflow_log_metric("learn_pp", learn_pp)
   mlflow_log_metric("learn_p3", learn_p3)
@@ -995,6 +952,9 @@ load_model_weights_hdf5(model_p3, cp_path)
 ## -----------------------------------------------------------------------------
 # calculating the predictions
 with(mlflow_start_run(), {
+  mlflow_log_param("epochs", epochs)
+  mlflow_log_param("batch_size", batch_size)
+  mlflow_log_param("validation_split", validation_split)
   learn$fitshp3 <- as.vector(model_p3 %>% predict(list(XX)))
   test$fitshp3 <- as.vector(model_p3 %>% predict(list(TT)))
 
@@ -1004,7 +964,7 @@ with(mlflow_start_run(), {
 
   # average claims size
   sprintf("Average size (test): %s", round(mean(test$fitshp3), 1))
-
+ model = "Plain-vanilla p3 (inverse gaussian)"
  learn_p2 <- round(gamma_loss(learn$Claim, learn$fitshp3), 4)
  learn_pp <- round(p_loss(learn$Claim, learn$fitshp3, p) * 10, 4)
  learn_p3 <- round(ig_loss(learn$Claim, learn$fitshp3) * 1000, 4)
@@ -1013,18 +973,6 @@ with(mlflow_start_run(), {
  test_p3 <- round(ig_loss(test$Claim, test$fitshp3) * 1000, 4)
  avg_size <- round(mean(test$fitshp3), 0)
   ## -----------------------------------------------------------------------------
-  df_cmp %<>% bind_rows(
-    data.frame(model = "Plain-vanilla p3 (inverse gaussian)",
-               learn_p2 = round(gamma_loss(learn$Claim, learn$fitshp3), 4),
-               learn_pp = round(p_loss(learn$Claim, learn$fitshp3, p) * 10, 4),
-               learn_p3 = round(ig_loss(learn$Claim, learn$fitshp3) * 1000, 4),
-               test_p2 = round(gamma_loss(test$Claim, test$fitshp3), 4),
-               test_pp = round(p_loss(test$Claim, test$fitshp3, p) * 10, 4),
-               test_p3 = round(ig_loss(test$Claim, test$fitshp3) * 1000, 4),
-               avg_size = round(mean(test$fitshp3), 0)
-    ))
-  df_cmp
-
   mlflow_log_metric("learn_p2", learn_p2)
   mlflow_log_metric("learn_pp", learn_pp)
   mlflow_log_metric("learn_p3", learn_p3)
@@ -1053,18 +1001,17 @@ with(mlflow_start_run(), {
 
 # COMMAND ----------
 
-# DBTITLE 1,Conclusion
-## -----------------------------------------------------------------------------
-  df_cmp
+# MAGIC %md
+# MAGIC [Link to Experiment](https://e2-demo-field-eng.cloud.databricks.com/?o=1444828305810485#mlflow/experiments/83447045894155/s?searchInput=&orderByKey=metrics.%60Average%20size%20%28test%29%60&orderByAsc=false&startTime=LAST_HOUR&lifecycleFilter=Active&modelVersionFilter=All%20Runs&categorizedUncheckedKeys[attributes][]=&categorizedUncheckedKeys[params][]=&categorizedUncheckedKeys[metrics][]=&categorizedUncheckedKeys[tags][]=&diffSwitchSelected=false&preSwitchCategorizedUncheckedKeys[attributes][]=&preSwitchCategorizedUncheckedKeys[params][]=&preSwitchCategorizedUncheckedKeys[metrics][]=&preSwitchCategorizedUncheckedKeys[tags][]=&postSwitchCategorizedUncheckedKeys[attributes]=,Version&postSwitchCategorizedUncheckedKeys[params][]=&postSwitchCategorizedUncheckedKeys[metrics][]=&postSwitchCategorizedUncheckedKeys[tags][]=)
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC We can draw the following conclusions:
 # MAGIC 
-# MAGIC Fitting these networks takes in average ~30 epochs, thus, fitting is very fast here.
-# MAGIC We give preference to the gamma model p=2. However, these solutions would need further analysis to perform a thorough model selection, e.g., one can study Tukey{Anscombe plots, dispersion parameters, etc. We refrain from doing so because this is not the main purpose of this notebook.
-# MAGIC We remark that the inverse Gaussian model does not have the lowest in-sample loss on Lp=3. This seems counter-intuitive, but it is caused by the fact that we exercise early stopping. In fact, the inverse Gaussian model is more sensitive in fitting and, typically, this results in an earlier stopping time. Here, it uses less than 30 epochs, whereas the other two cases use more than 30 epochs. In general, the inverse Gaussian model is more difficult to fit.
+# MAGIC - Fitting these networks takes in average ~30 epochs, thus, fitting is very fast here.
+# MAGIC - We give preference to the gamma model p=2. However, these solutions would need further analysis to perform a thorough model selection, e.g., one can study Tukey{Anscombe plots, dispersion parameters, etc. We refrain from doing so because this is not the main purpose of this notebook.
+# MAGIC - We remark that the inverse Gaussian model does not have the lowest in-sample loss on Lp=3. This seems counter-intuitive, but it is caused by the fact that we exercise early stopping. In fact, the inverse Gaussian model is more sensitive in fitting and, typically, this results in an earlier stopping time. Here, it uses less than 30 epochs, whereas the other two cases use more than 30 epochs. In general, the inverse Gaussian model is more difficult to fit.
 
 # COMMAND ----------
 
@@ -1198,18 +1145,6 @@ with(mlflow_start_run(), {
    test_pp <- round(p_loss(test$Claim, test$fitlgnp2, p) * 10, 4)
    test_p3 <- round(ig_loss(test$Claim, test$fitlgnp2) * 1000, 4)
    avg_size <- round(mean(test$fitlgnp2), 0)
-  ## ----------------------------------------------------------------------------
-  df_cmp %<>% bind_rows(
-    data.frame(model = "LocalGLMnet p2 (gamma)",
-               learn_p2 = round(gamma_loss(learn$Claim, learn$fitlgnp2), 4),
-               learn_pp = round(p_loss(learn$Claim, learn$fitlgnp2, p) * 10, 4),
-               learn_p3 = round(ig_loss(learn$Claim, learn$fitlgnp2) * 1000, 4),
-               test_p2 = round(gamma_loss(test$Claim, test$fitlgnp2), 4),
-               test_pp = round(p_loss(test$Claim, test$fitlgnp2, p) * 10, 4),
-               test_p3 = round(ig_loss(test$Claim, test$fitlgnp2) * 1000, 4),
-               avg_size = round(mean(test$fitlgnp2), 0)
-    ))
-  df_cmp
   mlflow_log_metric("learn_p2", learn_p2)
   mlflow_log_metric("learn_pp", learn_pp)
   mlflow_log_metric("learn_p3", learn_p3)
@@ -1327,17 +1262,6 @@ with(mlflow_start_run(), {
   test_p3 <- round(ig_loss(test$Claim, test$fitlgnpp) * 1000, 4)
   avg_size <- round(mean(test$fitlgnpp), 0)
   ## -----------------------------------------------------------------------------
-  df_cmp %<>% bind_rows(
-    data.frame(model = "LocalGLMnet pp (p=2.5)",
-               learn_p2 = round(gamma_loss(learn$Claim, learn$fitlgnpp), 4),
-               learn_pp = round(p_loss(learn$Claim, learn$fitlgnpp, p) * 10, 4),
-               learn_p3 = round(ig_loss(learn$Claim, learn$fitlgnpp) * 1000, 4),
-               test_p2 = round(gamma_loss(test$Claim, test$fitlgnpp), 4),
-               test_pp = round(p_loss(test$Claim, test$fitlgnpp, p) * 10, 4),
-               test_p3 = round(ig_loss(test$Claim, test$fitlgnpp) * 1000, 4),
-               avg_size = round(mean(test$fitlgnpp), 0)
-    ))
-  df_cmp
   mlflow_log_metric("learn_p2", learn_p2)
   mlflow_log_metric("learn_pp", learn_pp)
   mlflow_log_metric("learn_p3", learn_p3)
@@ -1455,17 +1379,6 @@ with(mlflow_start_run(), {
   test_p3 <- round(ig_loss(test$Claim, test$fitlgnp3) * 1000, 4)
   avg_size <- round(mean(test$fitlgnp3), 0)
   ## -----------------------------------------------------------------------------
-  df_cmp %<>% bind_rows(
-    data.frame(model = "LocalGLMnet p3 (inverse gaussian)",
-               learn_p2 = round(gamma_loss(learn$Claim, learn$fitlgnp3), 4),
-               learn_pp = round(p_loss(learn$Claim, learn$fitlgnp3, p) * 10, 4),
-               learn_p3 = round(ig_loss(learn$Claim, learn$fitlgnp3) * 1000, 4),
-               test_p2 = round(gamma_loss(test$Claim, test$fitlgnp3), 4),
-               test_pp = round(p_loss(test$Claim, test$fitlgnp3, p) * 10, 4),
-               test_p3 = round(ig_loss(test$Claim, test$fitlgnp3) * 1000, 4),
-               avg_size = round(mean(test$fitlgnp3), 0)
-    ))
-  df_cmp
   mlflow_log_metric("learn_p2", learn_p2)
   mlflow_log_metric("learn_pp", learn_pp)
   mlflow_log_metric("learn_p3", learn_p3)
@@ -1493,6 +1406,13 @@ grid.arrange(plt1, plt2, plt3, plt4, top="LocalGLMnet Inverse Gaussian")
 
 # COMMAND ----------
 
-# DBTITLE 1,Calibration
-## -----------------------------------------------------------------------------
-df_cmp
+# MAGIC %md
+# MAGIC [Link to Experiment](https://e2-demo-field-eng.cloud.databricks.com/?o=1444828305810485#mlflow/experiments/83447045894155/s?searchInput=&orderByKey=metrics.%60Average%20size%20%28test%29%60&orderByAsc=false&startTime=LAST_HOUR&lifecycleFilter=Active&modelVersionFilter=All%20Runs&categorizedUncheckedKeys[attributes][]=&categorizedUncheckedKeys[params][]=&categorizedUncheckedKeys[metrics][]=&categorizedUncheckedKeys[tags][]=&diffSwitchSelected=false&preSwitchCategorizedUncheckedKeys[attributes][]=&preSwitchCategorizedUncheckedKeys[params][]=&preSwitchCategorizedUncheckedKeys[metrics][]=&preSwitchCategorizedUncheckedKeys[tags][]=&postSwitchCategorizedUncheckedKeys[attributes]=,Version&postSwitchCategorizedUncheckedKeys[params][]=&postSwitchCategorizedUncheckedKeys[metrics][]=&postSwitchCategorizedUncheckedKeys[tags][]=)
+
+# COMMAND ----------
+
+# DBTITLE 1,Conclusion
+# MAGIC %md
+# MAGIC We can draw the following conclusions:
+# MAGIC - We again prefer the gamma model over the other power variance parameter models. 
+# MAGIC - Moreover, for this particular data set the LocalGLMnet outperforms the deep FFN network. However, this is not the crucial point of introducing the LocalGLMnet, but the LocalGLMnet leads to interpretable predictions and it allows for variable selection as we are going to demonstrate in the next sections.
