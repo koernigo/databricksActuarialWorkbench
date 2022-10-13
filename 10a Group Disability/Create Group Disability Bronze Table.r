@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %sql
-# MAGIC drop database ins_data_sets CASCADE
+# MAGIC ---drop database ins_data_sets CASCADE
 
 # COMMAND ----------
 
@@ -15,11 +15,11 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC drop table if exists workerscomp_bronze
+# MAGIC drop table if exists groupdisability_bronze
 
 # COMMAND ----------
 
-load("WorkersComp.RData")
+load("GroupDisability.RData")
 
 # COMMAND ----------
 
@@ -29,9 +29,9 @@ library(SparkR)
 
 sparkR.session()
 write_format = "delta"
-dataset="workerscomp_bronze"
-dataset_descr = "Synthetic Workers Comp Claims"
-save_path = paste("/tmp/delta/WC/",dataset,sep="")
+dataset="groupdisability_bronze"
+dataset_descr = "Synthetic Group Disability Claims"
+save_path = paste("/tmp/delta/GD/",dataset,sep="")
 table_name = dataset
 # Write the data to its target.
 data_set_df <- createDataFrame( as.data.frame(WorkersComp))
@@ -45,4 +45,4 @@ print(result)
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC show table extended like 'workerscomp_bronze'
+# MAGIC show table extended like 'groupdisability_bronze'

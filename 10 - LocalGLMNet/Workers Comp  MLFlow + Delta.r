@@ -1,7 +1,7 @@
 # Databricks notebook source
 # DBTITLE 1,An End To End Actuarial Workflow for Workers Comp Claim Size Modeling
 # MAGIC %md
-# MAGIC ![my_test_image](files/WC_E2E.png)
+# MAGIC ![my_test_image](files/WC_E2E2.png)
 
 # COMMAND ----------
 
@@ -243,6 +243,7 @@ print(result)
 
 # COMMAND ----------
 
+# DBTITLE 1,Create Features
 ## -----------------------------------------------------------------------------
 # scaling and cut-off
 dat <- dat %>% mutate(
@@ -412,6 +413,7 @@ qq1
 
 # COMMAND ----------
 
+# DBTITLE 1,Plot Claim Reporting Delay
 ## -----------------------------------------------------------------------------
 ggplot(acc1, aes(x = rep_week - acc_week, y = max(acc_week) - acc_week)) +
     geom_point() +
@@ -593,9 +595,14 @@ with(mlflow_start_run(), {
   mlflow_log_metric("test_pp", round(p_loss(test$Claim, size_hom, p) * 10, 4))
   mlflow_log_metric("test_p3", round(ig_loss(test$Claim, size_hom) * 1000, 4))
   mlflow_log_metric("avg_size", round(size_hom, 0))
-  mlflow_set_tag("mlflow.runName", "Null Model")
+  mlflow_set_tag("mlflow.runName", "Regression (Null Model)")
   #mlflow_log_model(learn, "LR Model")
 })
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC [Link to Experiment](https://e2-demo-field-eng.cloud.databricks.com/?o=1444828305810485#mlflow/experiments/83447045894155/s?searchInput=&orderByKey=metrics.%60Average%20size%20%28test%29%60&orderByAsc=false&startTime=LAST_HOUR&lifecycleFilter=Active&modelVersionFilter=All%20Runs&categorizedUncheckedKeys[attributes][]=&categorizedUncheckedKeys[params][]=&categorizedUncheckedKeys[metrics][]=&categorizedUncheckedKeys[tags][]=&diffSwitchSelected=false&preSwitchCategorizedUncheckedKeys[attributes][]=&preSwitchCategorizedUncheckedKeys[params][]=&preSwitchCategorizedUncheckedKeys[metrics][]=&preSwitchCategorizedUncheckedKeys[tags][]=&postSwitchCategorizedUncheckedKeys[attributes]=,Version&postSwitchCategorizedUncheckedKeys[params][]=&postSwitchCategorizedUncheckedKeys[metrics][]=&postSwitchCategorizedUncheckedKeys[tags][]=)
 
 # COMMAND ----------
 

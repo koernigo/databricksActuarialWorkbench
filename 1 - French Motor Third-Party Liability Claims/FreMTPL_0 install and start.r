@@ -22,7 +22,3 @@ data(freMTPL2freq)
 str(freMTPL2freq)
 
 
-
-# COMMAND ----------
-
-

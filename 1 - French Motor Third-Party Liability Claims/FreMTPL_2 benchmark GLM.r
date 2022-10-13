@@ -73,6 +73,8 @@ n_t
 
 c(Poisson.Deviance(learn.GLM$Exposure*lambda2, learn.GLM$ClaimNb),Poisson.Deviance(test.GLM$Exposure*lambda2, test.GLM$ClaimNb))
 
+# COMMAND ----------
+
 ##########################################
 #########  GLM analysis
 ##########################################
@@ -94,6 +96,7 @@ learn.GLM$fit <- fitted(d.glm1)
 test.GLM$fit <- predict(d.glm1, newdata=test.GLM, type="response")
 c(Poisson.Deviance(learn.GLM$fit, learn.GLM$ClaimNb),Poisson.Deviance(test.GLM$fit, test.GLM$ClaimNb))
 
+# COMMAND ----------
 
 ### Model GLM2
 {t1 <- proc.time()
@@ -110,6 +113,7 @@ learn.GLM$fit <- fitted(d.glm2)
 test.GLM$fit <- predict(d.glm2, newdata=test.GLM, type="response")
 c(Poisson.Deviance(learn.GLM$fit, learn.GLM$ClaimNb),Poisson.Deviance(test.GLM$fit, test.GLM$ClaimNb))
 
+# COMMAND ----------
 
 ### Model GLM3
 {t1 <- proc.time()
@@ -125,5 +129,3 @@ length(d.glm3$coefficients)
 learn.GLM$fit <- fitted(d.glm3)
 test.GLM$fit <- predict(d.glm3, newdata=test.GLM, type="response")
 c(Poisson.Deviance(learn.GLM$fit, learn.GLM$ClaimNb),Poisson.Deviance(test.GLM$fit, test.GLM$ClaimNb))
-
-

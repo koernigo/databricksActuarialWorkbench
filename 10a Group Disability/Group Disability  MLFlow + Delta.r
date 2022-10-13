@@ -1,5 +1,5 @@
 # Databricks notebook source
-# DBTITLE 1,An End To End Actuarial Workflow for Workers Comp Claim Size Modeling
+# DBTITLE 1,An End To End Actuarial Workflow for Group Disability Claim Size Modeling
 # MAGIC %md
 # MAGIC ![my_test_image](files/WC_E2E.png)
 
@@ -7,22 +7,22 @@
 
 # DBTITLE 1,Library Pre-Requisites
 #Uncomment if Cluster doesn't install this package
-#install.packages("conflicted")
+install.packages("conflicted")
 
 # COMMAND ----------
 
 #Uncomment if Cluster doesn't install this package
-#install.packages("keras")
+install.packages("keras")
 
 # COMMAND ----------
 
 #Uncomment if Cluster doesn't install this package
-#install.packages("locfit")
+install.packages("locfit")
 
 # COMMAND ----------
 
 #Uncomment if Cluster doesn't install this package
-#install.packages("corrplot")
+install.packages("corrplot")
 
 # COMMAND ----------
 
@@ -191,23 +191,23 @@ plot_size <- function(test, xvar, title, model, mdlvariant) {
 # COMMAND ----------
 
 # DBTITLE 1,Load Workers Comp Data From Bronze Table
-WorkersComp_Spark_DF<-SparkR::sql("SELECT * FROM ins_data_sets.workerscomp_bronze")
-WorkersComp <- as.data.frame(WorkersComp_Spark_DF)
-WorkersComp <- mutate_at(WorkersComp, vars("MaritalStatus", "Gender","PartTimeFullTime"), as.factor)
+GroupDisability_Spark_DF<-SparkR::sql("SELECT * FROM ins_data_sets.groupdisability_bronze")
+GroupDisability <- as.data.frame(GroupDisability_Spark_DF)
+GroupDisability <- mutate_at(GroupDisability, vars("MaritalStatus", "Gender","PartTimeFullTime"), as.factor)
 
 # COMMAND ----------
 
-str(WorkersComp)
-
-# COMMAND ----------
-
-## -----------------------------------------------------------------------------
-#load(file.path("WorkersComp.RData"))  # relative path to .Rmd file
+str(GroupDisability)
 
 # COMMAND ----------
 
 ## -----------------------------------------------------------------------------
-dat <- WorkersComp %>% filter(AccYear > 1987, HoursWorkedPerWeek > 0)
+#load(file.path("GroupDisability.RData"))  # relative path to .Rmd file
+
+# COMMAND ----------
+
+## -----------------------------------------------------------------------------
+dat <- GroupDisability %>% filter(AccYear > 1987, HoursWorkedPerWeek > 0)
 
 # COMMAND ----------
 
@@ -224,9 +224,9 @@ str(dat)
 
 # DBTITLE 1,Store Silver Table To Delta Lake
 write_format = "delta"
-dataset="workerscomp_silver"
-dataset_descr = "Workers Comp Claims Silver"
-save_path = paste("/tmp/delta/WC/",dataset,sep="")
+dataset="groupgisability_silver"
+dataset_descr = "Group Disability Claims Silver"
+save_path = paste("/tmp/delta/GD/",dataset,sep="")
 dbutils.fs.rm(save_path,"true")
 table_name = dataset
 # Write the data to its target.
@@ -535,14 +535,14 @@ str(dat)
 # COMMAND ----------
 
 #Uncomment if not installed on the cluster
-#install.packages("mlflow")
+install.packages("mlflow")
 library(mlflow)
 install_mlflow()
 
 # COMMAND ----------
 
 # DBTITLE 1,Set MlFlow Experiment
-mlflow_set_experiment(experiment_id = "83447045894155") #This is for Experiment "WorkersComp"
+mlflow_set_experiment(experiment_id = "363313668622318") #This is for Experiment "GroupDisability"
 
 # COMMAND ----------
 
