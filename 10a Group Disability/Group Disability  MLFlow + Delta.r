@@ -224,7 +224,7 @@ str(dat)
 
 # DBTITLE 1,Store Silver Table To Delta Lake
 write_format = "delta"
-dataset="groupgisability_silver"
+dataset="groupdisability_silver"
 dataset_descr = "Group Disability Claims Silver"
 save_path = paste("/tmp/delta/GD/",dataset,sep="")
 dbutils.fs.rm(save_path,"true")
@@ -240,6 +240,13 @@ result <- SparkR::sql(command1)
 print(result)
 result <- SparkR::sql(command2)
 print(result)
+
+# COMMAND ----------
+
+# DBTITLE 1,OPTIONAL: Use Databricks Visualizations
+# MAGIC %python
+# MAGIC df = spark.read.load('/tmp/delta/GD/groupdisability_silver')
+# MAGIC display(df)
 
 # COMMAND ----------
 
