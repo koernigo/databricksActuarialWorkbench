@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %sql
-# MAGIC drop database ins_data_sets CASCADE
+# MAGIC ---drop database ins_data_sets CASCADE
 
 # COMMAND ----------
 
@@ -35,7 +35,7 @@ save_path = paste("/tmp/delta/WC/",dataset,sep="")
 table_name = dataset
 # Write the data to its target.
 data_set_df <- createDataFrame( as.data.frame(WorkersComp))
-write.df(data_set_df, source = write_format, path = save_path)
+write.df(data_set_df, source = write_format, path = save_path,mode = "OVERWRITE")
 # Create the table.
 command = paste("CREATE TABLE ins_data_sets.", table_name, " USING DELTA LOCATION '", save_path, "'", " COMMENT '",dataset_descr,"'",sep = "")
 print(command)
@@ -45,4 +45,4 @@ print(result)
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC show table extended like 'workerscomp_bronze'
+# MAGIC describe table workerscomp_bronze

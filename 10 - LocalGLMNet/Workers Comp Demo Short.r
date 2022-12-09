@@ -1,28 +1,28 @@
 # Databricks notebook source
-# DBTITLE 1,An End To End Actuarial Workflow for Group Disability Claim Size Modeling
+# DBTITLE 1,An End To End Actuarial Workflow for Workers Comp Claim Size Modeling
 # MAGIC %md
-# MAGIC ![my_test_image](files/WC_E2E.png)
+# MAGIC ![my_test_image](files/WC_E2E2.png)
 
 # COMMAND ----------
 
 # DBTITLE 1,Library Pre-Requisites
 #Uncomment if Cluster doesn't install this package
-install.packages("conflicted")
+#install.packages("conflicted")
 
 # COMMAND ----------
 
 #Uncomment if Cluster doesn't install this package
-install.packages("keras")
+#install.packages("keras")
 
 # COMMAND ----------
 
 #Uncomment if Cluster doesn't install this package
-install.packages("locfit")
+#install.packages("locfit")
 
 # COMMAND ----------
 
 #Uncomment if Cluster doesn't install this package
-install.packages("corrplot")
+#install.packages("corrplot")
 
 # COMMAND ----------
 
@@ -191,23 +191,23 @@ plot_size <- function(test, xvar, title, model, mdlvariant) {
 # COMMAND ----------
 
 # DBTITLE 1,Load Workers Comp Data From Bronze Table
-GroupDisability_Spark_DF<-SparkR::sql("SELECT * FROM ins_data_sets.groupdisability_bronze")
-GroupDisability <- as.data.frame(GroupDisability_Spark_DF)
-GroupDisability <- mutate_at(GroupDisability, vars("MaritalStatus", "Gender","PartTimeFullTime"), as.factor)
+WorkersComp_Spark_DF<-SparkR::sql("SELECT * FROM ins_data_sets.workerscomp_bronze")
+WorkersComp <- as.data.frame(WorkersComp_Spark_DF)
+WorkersComp <- mutate_at(WorkersComp, vars("MaritalStatus", "Gender","PartTimeFullTime"), as.factor)
 
 # COMMAND ----------
 
-str(GroupDisability)
-
-# COMMAND ----------
-
-## -----------------------------------------------------------------------------
-#load(file.path("GroupDisability.RData"))  # relative path to .Rmd file
+str(WorkersComp)
 
 # COMMAND ----------
 
 ## -----------------------------------------------------------------------------
-dat <- GroupDisability %>% filter(AccYear > 1987, HoursWorkedPerWeek > 0)
+#load(file.path("WorkersComp.RData"))  # relative path to .Rmd file
+
+# COMMAND ----------
+
+## -----------------------------------------------------------------------------
+dat <- WorkersComp %>% filter(AccYear > 1987, HoursWorkedPerWeek > 0)
 
 # COMMAND ----------
 
@@ -224,9 +224,9 @@ str(dat)
 
 # DBTITLE 1,Store Silver Table To Delta Lake
 write_format = "delta"
-dataset="groupdisability_silver"
-dataset_descr = "Group Disability Claims Silver"
-save_path = paste("/tmp/delta/GD/",dataset,sep="")
+dataset="workerscomp_silver"
+dataset_descr = "Workers Comp Claims Silver"
+save_path = paste("/tmp/delta/WC/",dataset,sep="")
 dbutils.fs.rm(save_path,"true")
 table_name = dataset
 # Write the data to its target.
@@ -243,13 +243,7 @@ print(result)
 
 # COMMAND ----------
 
-# DBTITLE 1,OPTIONAL: Use Databricks Visualizations
-# MAGIC %python
-# MAGIC df = spark.read.load('/tmp/delta/GD/groupdisability_silver')
-# MAGIC display(df)
-
-# COMMAND ----------
-
+# DBTITLE 1,Create Features
 ## -----------------------------------------------------------------------------
 # scaling and cut-off
 dat <- dat %>% mutate(
@@ -295,16 +289,12 @@ dat <- dat %>% mutate(
 # COMMAND ----------
 
 ## -----------------------------------------------------------------------------
-head(dat)
+str(dat)
 
 # COMMAND ----------
 
 ## -----------------------------------------------------------------------------
 str(dat)
-
-# COMMAND ----------
-
-colnames(dat)
 
 # COMMAND ----------
 
@@ -419,6 +409,7 @@ qq1
 
 # COMMAND ----------
 
+# DBTITLE 1,Plot Claim Reporting Delay
 ## -----------------------------------------------------------------------------
 ggplot(acc1, aes(x = rep_week - acc_week, y = max(acc_week) - acc_week)) +
     geom_point() +
@@ -542,14 +533,14 @@ str(dat)
 # COMMAND ----------
 
 #Uncomment if not installed on the cluster
-install.packages("mlflow")
+#install.packages("mlflow")
 library(mlflow)
 install_mlflow()
 
 # COMMAND ----------
 
 # DBTITLE 1,Set MlFlow Experiment
-mlflow_set_experiment(experiment_id = "363313668622318") #This is for Experiment "GroupDisability"
+mlflow_set_experiment(experiment_id = "83447045894155") #This is for Experiment "WorkersComp"
 
 # COMMAND ----------
 
@@ -600,9 +591,14 @@ with(mlflow_start_run(), {
   mlflow_log_metric("test_pp", round(p_loss(test$Claim, size_hom, p) * 10, 4))
   mlflow_log_metric("test_p3", round(ig_loss(test$Claim, size_hom) * 1000, 4))
   mlflow_log_metric("avg_size", round(size_hom, 0))
-  mlflow_set_tag("mlflow.runName", "Null Model")
+  mlflow_set_tag("mlflow.runName", "Regression (Null Model)")
   #mlflow_log_model(learn, "LR Model")
 })
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC [Link to Experiment](https://e2-demo-field-eng.cloud.databricks.com/?o=1444828305810485#mlflow/experiments/83447045894155/s?searchInput=&orderByKey=metrics.%60Average%20size%20%28test%29%60&orderByAsc=false&startTime=LAST_HOUR&lifecycleFilter=Active&modelVersionFilter=All%20Runs&categorizedUncheckedKeys[attributes][]=&categorizedUncheckedKeys[params][]=&categorizedUncheckedKeys[metrics][]=&categorizedUncheckedKeys[tags][]=&diffSwitchSelected=false&preSwitchCategorizedUncheckedKeys[attributes][]=&preSwitchCategorizedUncheckedKeys[params][]=&preSwitchCategorizedUncheckedKeys[metrics][]=&preSwitchCategorizedUncheckedKeys[tags][]=&postSwitchCategorizedUncheckedKeys[attributes]=,Version&postSwitchCategorizedUncheckedKeys[params][]=&postSwitchCategorizedUncheckedKeys[metrics][]=&postSwitchCategorizedUncheckedKeys[tags][]=)
 
 # COMMAND ----------
 
@@ -988,52 +984,8 @@ with(mlflow_start_run(), {
   mlflow_log_metric("test_p3", test_p3)
   mlflow_log_metric("avg_size", avg_size)
   mlflow_set_tag("mlflow.runName", "Plain-vanilla p3 (inverse gaussian)")
-  #mlflow_log_model(model_p2, "model")
-  mlflow_save_model(model_p2, "model")
+  mlflow_log_model(model_p2, "model")
 })
-
-# COMMAND ----------
-
-# MAGIC %fs
-# MAGIC ls databricks/mlflow-tracking/363313668622318/9a9aedbd084247f584cd3f6404e5c1fc/artifacts
-
-# COMMAND ----------
-
-# MAGIC %python
-# MAGIC import os
-# MAGIC import mlflow
-# MAGIC from mlflow import MlflowClient
-# MAGIC def print_artifact_info(artifact):
-# MAGIC     print("artifact: {}".format(artifact.path))
-# MAGIC     print("is_dir: {}".format(artifact.is_dir))
-# MAGIC     print("size: {}".format(artifact.file_size))
-# MAGIC client = MlflowClient()
-# MAGIC artifacts = client.list_artifacts("9a9aedbd084247f584cd3f6404e5c1fc")
-# MAGIC for artifact in artifacts:
-# MAGIC     print_artifact_info(artifact)
-# MAGIC local_path = client.download_artifacts("9a9aedbd084247f584cd3f6404e5c1fc", "model", "/dbfs/temp/")
-# MAGIC print("Artifacts downloaded in: {}".format(local_path))
-# MAGIC print("Artifacts: {}".format(os.listdir(local_path)))
-# MAGIC 
-# MAGIC mlflow.keras.save_model(path="/dbfs/temp/model2")
-
-# COMMAND ----------
-
-# MAGIC %sh
-# MAGIC mv /dbfs/temp/model/model /dbfs/temp/model/model.h5.h5
-
-# COMMAND ----------
-
-# MAGIC %sh
-# MAGIC cat /dbfs/temp/model/MLmodel
-
-# COMMAND ----------
-
-# MAGIC %python
-# MAGIC 
-# MAGIC for artifact in artifacts:
-# MAGIC     print_artifact_info(artifact)
-# MAGIC client.set_terminated(run.info.run_id)
 
 # COMMAND ----------
 
