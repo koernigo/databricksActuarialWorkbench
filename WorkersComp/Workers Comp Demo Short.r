@@ -5,8 +5,17 @@
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC Please createa a single node cluster using DBR 11.4 LTS ML. Then connect the cluster to this Notebook
+
+# COMMAND ----------
+
 # DBTITLE 1,Setup Data: Creates a Database with Delta Lake table
 # MAGIC %run ./_setup/createDatabase
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -30,6 +39,12 @@
 WorkersComp_Spark_DF<-SparkR::sql("SELECT * FROM actuarial_db.workerscomp_bronze")
 WorkersComp <- as.data.frame(WorkersComp_Spark_DF)
 WorkersComp <- mutate_at(WorkersComp, vars("MaritalStatus", "Gender","PartTimeFullTime"), as.factor)
+
+# COMMAND ----------
+
+# DBTITLE 1,The Data schema can be explored using the Data Explorer or the Notebook
+# MAGIC %md-sandbox
+# MAGIC <img src="https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/Data%20Explorer.png" style="height: 600px"/>
 
 # COMMAND ----------
 
