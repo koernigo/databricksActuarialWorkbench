@@ -5,3 +5,7 @@ This repo demonstrates how to run acturial data science on Databricks and levera
 
 Cluster Setup:
 Please createa a single node cluster using DBR 11.4 LTS ML
+
+. image:: https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/WC_E2E2.png
+    :width: 480px
+    :target: https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/WC_E2E2.png
