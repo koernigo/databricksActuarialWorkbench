@@ -18,7 +18,7 @@ install.packages("mlflow")
 # COMMAND ----------
 
 library(mlflow)
-install_mlflow()
+#install_mlflow()
 
 # COMMAND ----------
 
@@ -44,7 +44,7 @@ mlflow_end_run()
 
 # COMMAND ----------
 
-mlflow_set_experiment(experiment_id = "83447045946176")
+#mlflow_set_experiment(experiment_id = "83447045946176")
 with(mlflow_start_run(), {
   
   # Set the model parameters
