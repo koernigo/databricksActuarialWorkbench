@@ -1,7 +1,7 @@
 # Databricks notebook source
 # DBTITLE 1,An End To End Actuarial Workflow for Workers Comp Claim Size Modeling
-# MAGIC %md
-# MAGIC ![my_test_image](files/WC_E2E2.png)
+# MAGIC %md-sandbox
+# MAGIC <img src="https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/WC_E2E2.png" style="height: 600px"/>
 
 # COMMAND ----------
 
@@ -232,6 +232,12 @@ head(acc2)
 qq0 <- c(.9, .975, .99)
 qq1 <- quantile(dat$RepDelay_week, probs = qq0)
 qq1
+
+# COMMAND ----------
+
+# DBTITLE 1,Databricks SQL can be utilized to create BI Dashboards to further explore the claims data
+# MAGIC %md-sandbox
+# MAGIC <img src="https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/WorkersComp%20Dashboard.png" style="height: 600px"/>
 
 # COMMAND ----------
 
