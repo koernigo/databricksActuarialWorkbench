@@ -3,5 +3,5 @@ Deep dive on the localGLM model used can be found here: https://papers.ssrn.com/
 
 This repo demonstrates how to run acturial data science on Databricks and leverage mlFlow and other ML features within the Databricks platform
 
-<img src="https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/WC_E2E2.png" style="height: 600px"/>
+<img src="https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/WC_E2E2.png" style="height: 400px"/>
 
