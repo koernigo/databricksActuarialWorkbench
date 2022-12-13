@@ -3,7 +3,7 @@
 This folder contains a Databricks Notebook that illustrates the use of Databricks/MLflow in acturial tasks
 
 ### R Notebook
-- [WorkersCompaShort.r](https://github.com/koernigo/databricksActuarialWorkbench/blob/master/WorkersComp/Workers%20Comp%20Demo%20Short.r)
+- [Workers Comp Demo Short.r](https://github.com/koernigo/databricksActuarialWorkbench/blob/master/WorkersComp/Workers%20Comp%20Demo%20Short.r)
 
 
 Source:
