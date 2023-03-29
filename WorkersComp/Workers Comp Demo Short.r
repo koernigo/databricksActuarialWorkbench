@@ -15,10 +15,6 @@
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 # DBTITLE 1,Setup Libraries
 # MAGIC %run ./_setup/librarySetup
 
@@ -45,6 +41,8 @@ WorkersComp <- mutate_at(WorkersComp, vars("MaritalStatus", "Gender","PartTimeFu
 # DBTITLE 1,The Data schema can be explored using the Data Explorer or the Notebook
 # MAGIC %md-sandbox
 # MAGIC <img src="https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/Data%20Explorer.png" style="height: 600px"/>
+# MAGIC 
+# MAGIC Link to Data Explorer (https://e2-demo-field-eng.cloud.databricks.com/explore/data/hive_metastore/actuarial_db/workerscomp_bronze?o=1444828305810485)
 
 # COMMAND ----------
 
@@ -52,6 +50,7 @@ str(WorkersComp)
 
 # COMMAND ----------
 
+# DBTITLE 1,Filter the Dataset to only include claims from 1988 on and for individuals working more than 0 hours per week
 ## -----------------------------------------------------------------------------
 dat <- WorkersComp %>% filter(AccYear > 1987, HoursWorkedPerWeek > 0)
 
@@ -64,6 +63,7 @@ dat <- dat %>% mutate(Id=1:nrow(dat))
 
 # COMMAND ----------
 
+# DBTITLE 1,The filtered dataset now contains 89332 observations (vs. 100,000)
 str(dat)
 
 # COMMAND ----------
@@ -86,6 +86,13 @@ result <- SparkR::sql(command1)
 print(result)
 result <- SparkR::sql(command2)
 print(result)
+
+# COMMAND ----------
+
+# DBTITLE 1,Advanced Databricks Vizualizations for interactive Exploration
+# MAGIC %python
+# MAGIC df = spark.read.load('/tmp/delta/WC/workerscomp_silver')
+# MAGIC display(df)
 
 # COMMAND ----------
 
@@ -253,6 +260,8 @@ qq1
 # DBTITLE 1,Databricks SQL can be utilized to create BI Dashboards to further explore the claims data
 # MAGIC %md-sandbox
 # MAGIC <img src="https://raw.githubusercontent.com/koernigo/databricksActuarialWorkbench/master/WorkersComp/WorkersComp%20Dashboard.png" style="height: 600px"/>
+# MAGIC 
+# MAGIC Link to Dashboard (https://e2-demo-field-eng.cloud.databricks.com/sql/dashboards/54c10db0-f1cd-47f9-85d6-0688007a4af2-worker-comp-claims-dashboard?o=1444828305810485)
 
 # COMMAND ----------
 

@@ -32,6 +32,7 @@ library(ggplot2)
 library(gridExtra)
 library(tidyr)
 library(corrplot)
+
 RNGversion("3.5.0")
 
 # COMMAND ----------
@@ -45,6 +46,7 @@ conflict_prefer("summarize", "dplyr")
 conflict_prefer("group_by", "dplyr")
 conflict_prefer("n", "dplyr")
 conflict_prefer("select", "dplyr")
+conflicts_prefer(dplyr::intersect)
 
 # COMMAND ----------
 
