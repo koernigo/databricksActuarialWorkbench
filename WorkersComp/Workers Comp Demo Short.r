@@ -72,7 +72,7 @@ str(dat)
 write_format = "delta"
 dataset="workerscomp_silver"
 dataset_descr = "Workers Comp Claims Silver"
-save_path = paste("/tmp/delta/WC/",dataset,sep="")
+save_path = paste("/insurance/delta/WC/",dataset,sep="")
 dbutils.fs.rm(save_path,"true")
 table_name = dataset
 # Write the data to its target.
@@ -91,7 +91,7 @@ print(result)
 
 # DBTITLE 1,Advanced Databricks Vizualizations for interactive Exploration
 # MAGIC %python
-# MAGIC df = spark.read.load('/tmp/delta/WC/workerscomp_silver')
+# MAGIC df = spark.read.load('/insurance/delta/WC/workerscomp_silver')
 # MAGIC display(df)
 
 # COMMAND ----------

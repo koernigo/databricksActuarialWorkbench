@@ -31,7 +31,7 @@ sparkR.session()
 write_format = "delta"
 dataset="workerscomp_bronze"
 dataset_descr = "Synthetic Workers Comp Claims"
-save_path = paste("/tmp/delta/WC/",dataset,sep="")
+save_path = paste("/insurance/delta/WC/",dataset,sep="")
 table_name = dataset
 # Write the data to its target.
 data_set_df <- createDataFrame( as.data.frame(WorkersComp))
